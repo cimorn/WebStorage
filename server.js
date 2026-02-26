@@ -1,3 +1,16 @@
+// 拦截并屏蔽特定的日志输出（在加载所有模块之前执行）
+const originalLog = console.log;
+console.log = (...args) => {
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('[dotenv@')) {
+        return; 
+    }
+    originalLog(...args);
+};
+// 屏蔽 Node.js 引擎的弃用警告 (Punycode 警告)
+process.removeAllListeners('warning');
+
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -10,7 +23,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 const MONGO_URL = process.env.MONGO_URL;
 
 const client = new OSS({
@@ -71,4 +84,10 @@ app.post('/api/items', async (req, res) => res.json(await new Item(req.body).sav
 app.put('/api/items/:id', async (req, res) => res.json(await Item.findByIdAndUpdate(req.params.id, req.body)));
 app.delete('/api/items/:id', async (req, res) => res.json(await Item.findByIdAndDelete(req.params.id)));
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// server.js 结尾
+app.listen(PORT, () => {
+    console.log('\n---------------------------------------');
+    console.log(`🚀 服务启动成功！`);
+    console.log(`🔗 本地预览地址: http://localhost:${PORT}`);
+    console.log('---------------------------------------\n');
+});

@@ -10,7 +10,7 @@ body {
     height: 60px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; 
     background: #fff; border-bottom: 1px solid #eee; z-index: 100;
 }
-.logo { display: flex; align-items: center; margin-left: 5px; }
+.logo { display: flex; align-items: center; margin-left: 21px; }
 .logo img { height: 28px; width: auto; }
 
 .header-btns { display: flex; gap: 8px; }
