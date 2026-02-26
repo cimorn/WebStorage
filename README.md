@@ -1,20 +1,82 @@
-# 📦 WebStorage
+# 📦 WebStorage - 云端极简物资管理系统
 
-> Ultimate Space Order / 极致空间秩序
+### 项目简介
 
-### 🌐 Introduction / 简介
+**WebStorage** 是一款专为个人及家庭打造的云端物资可视化管理工具。它通过最直观的层级结构，解决了“东西在哪”和“有多少”的核心痛点。
 
-**WebStorage** is a high-end personal inventory system built for the modern minimalist. Featuring a Glassmorphism UI and bilingual support.
+**核心特点总结：**
 
-**WebStorage** 是一款为现代极简主义者打造的高级个人仓储管理系统。具备毛玻璃质感界面与中英双语支持。
-
-### ✨ Features / 特性
-* **Premium UI**: Apple-style glass textures. / **高级视觉**: 苹果风毛玻璃质感。
-* **Cloud Ready**: Optimized for Zeabur & MongoDB. / **云端原生**: 适配 Zeabur 与 MongoDB。
+* **直观**：三级位置，一眼定位。
+* **丝滑**：树状折叠，管理不乱。
+* **严谨**：重名校验，逻辑严密。
+* **高效**：快速登记，即时反馈。
 
 ---
 
-### 🚀 Deployment / 部署
+## ✨ 核心功能
 
-1. **Environment**: Set `MONGO_URL` in Zeabur. / **环境**: 在 Zeabur 中配置 `MONGO_URL`。
-2. **Run**: Push to GitHub and deploy. / **运行**: 推送至 GitHub 即可自动部署。
+### 1. 完整数据记录
+
+支持物资的全维度信息录入，包括名称、品牌、规格、数量以及个性化备注，确保每一件物品都有据可查。
+
+### 2. MongoDB数据集成
+
+底层深度集成 MongoDB 数据库，利用其文档型存储的特性，实现物资数据的灵活扩展与高效存取。无论是复杂的层级关系还是海量的物品清单，都能保证查询响应在毫秒级。
+
+### 3. 阿里云OSS集成
+
+系统原生对接阿里云 OSS 对象存储。物资照片可直接上传至云端，不仅节省服务器空间，更保证了图片加载的极速响应与安全性。
+
+### 4. 侧边导航筛选
+
+左侧设有固定的一级分类导航栏，支持点击即时切换，在大类目之间跳转丝滑顺畅。
+
+### 5. 多级标签分类
+
+支持“一级位置、二级位置、三级位置”的自由拼接。无论是“宿舍-卧室-抽屉”还是“仓库-A架-3号箱”，都能完美适配。
+
+### 6. 树状折叠管理
+
+配置中心采用树状交互逻辑，支持一键展开或缩起子层级。即使有成百上千个位置节点，界面依然整洁易用。
+
+### 7. 同级重名查重
+
+严谨的逻辑校验：在同一个父级目录下，禁止添加名称完全相同的分类或位置，从源头杜绝数据混乱。
+
+
+---
+
+## 🚀 在 Zeabur 上的部署操作
+
+### 第一步：代码准备
+
+1. 在本地创建一个文件夹，放入 `server.js`, `app.js`, `index.html`, `style.css` 以及 `package.json`。
+2. 将代码推送到你的 GitHub 仓库。
+
+### 第二步：Zeabur 部署
+
+1. 登录 [Zeabur](https://zeabur.com/)，点击 **Create Project**。
+2. 选择 **Deploy service**，连接 GitHub 并选择你的仓库，Zeabur 会自动识别并运行。
+
+### 第三步：配置环境变量
+
+在 Zeabur 服务的 **Configs** 页面，点击 **Variables**，手动添加下方列出的必须变量。
+
+### 第四步：绑定 MongoDB
+
+1. 在项目页面点击 **Prebuilt Service**，选择 **MongoDB** 部署。
+2. 部署后，Zeabur 会自动生成 `MONGO_URL` 变量。**请确保将该变量手动填入你服务的 Variables 中。**
+
+---
+
+## 🛠️ 需要添加的环境变量
+
+请确保在 Zeabur 环境变量中正确配置以下参数，否则图片上传及数据存储将无法工作：
+
+| 变量名 | 说明 | 示例 |
+| --- | --- | --- |
+| `MONGO_URL` | MongoDB 连接地址 | `mongodb://root:password@mongo:27017` |
+| `OSS_REGION` | 阿里云 OSS 区域 | `oss-cn-hangzhou` |
+| `OSS_ACCESS_KEY_ID` | 阿里云访问密钥 ID | `LTAI5t...` |
+| `OSS_ACCESS_KEY_SECRET` | 阿里云访问密钥 Secret | `mU6Y2...` |
+| `OSS_BUCKET` | 阿里云 OSS 存储桶名称 | `your-bucket-name` |

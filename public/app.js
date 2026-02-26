@@ -1,21 +1,16 @@
-const API_BASE = '';
-let allCategories = [], allLocations = [], allItems = [];
+let allCategories = [], allLocations = [], allItems = [], isManageMode = false;
 let currentCat1 = '全部', currentCat2 = '', filterLoc = '';
-
-const zhSort = (list, key) => [...list].sort((a, b) => (a[key] || '').localeCompare((b[key] || ''), 'zh'));
 
 window.onload = refreshAll;
 
 async function refreshAll() {
-    try {
-        const [c, i, l] = await Promise.all([
-            fetch(`${API_BASE}/api/categories`).then(r => r.json()),
-            fetch(`${API_BASE}/api/items`).then(r => r.json()),
-            fetch(`${API_BASE}/api/locations`).then(r => r.json())
-        ]);
-        allCategories = c; allItems = i; allLocations = l;
-        renderSideNav(); renderSubNav(); initDropdowns(); renderGrid();
-    } catch (e) { console.error("数据加载失败", e); }
+    const [c, i, l] = await Promise.all([
+        fetch('/api/categories').then(r => r.json()),
+        fetch('/api/items').then(r => r.json()),
+        fetch('/api/locations').then(r => r.json())
+    ]);
+    allCategories = c; allItems = i; allLocations = l;
+    renderSideNav(); renderSubNav(); initDropdowns(); renderGrid();
 }
 
 function renderGrid() {
@@ -25,35 +20,34 @@ function renderGrid() {
         list = list.filter(i => i.cat1 === currentCat1);
         if (currentCat2) list = list.filter(i => i.cat2 === currentCat2);
     }
-    if (filterLoc) list = list.filter(i => i.locations.includes(filterLoc));
+    if (filterLoc) list = list.filter(i => i.locations && i.locations[0] === filterLoc);
     
-    list = zhSort(list, 'name');
-
     grid.innerHTML = list.map(item => {
-        const meta = [item.spec, item.quantity ? `${item.quantity}件` : '', item.locations.join(','), item.notes]
-            .filter(v => v && v.trim() !== '').join(' · ');
-
+        const line2Info = [item.brand, item.spec, item.quantity].filter(v => v && v.trim() !== "").join(' · ');
+        const locationStr = (item.locations || []).filter(v => v).join(' · ');
         return `
-            <div class="card">
-                <div class="card-opt">
-                    <span onclick="editItem('${item._id}')">编辑</span>
-                    <span onclick="deleteItem('${item._id}')" style="color:#ff3b30">删除</span>
-                </div>
-                <img src="${item.imageUrl || ''}" onerror="this.src='https://via.placeholder.com/300?text=未上传图片'">
-                <div class="card-body">
-                    <div class="card-title">${item.name}</div>
-                    <div class="card-meta">${meta || '点击编辑补充参数'}</div>
-                </div>
+        <div class="card">
+            <div class="card-mask">
+                <button onclick="editItem('${item._id}')">修改</button>
+                <button onclick="deleteItem('${item._id}')" style="color:red">删除</button>
             </div>
-        `;
-    }).join('');
+            <img src="${item.imageUrl || ''}" onerror="this.src='https://via.placeholder.com/200?text=NONE'">
+            <div class="card-body">
+                <div class="line1">
+                    <span class="name">${item.name}</span>
+                    ${item.notes ? `<span class="notes-mini">${item.notes}</span>` : ''}
+                </div>
+                <div class="line2">${line2Info}</div>
+                <div class="line3">${locationStr}</div>
+            </div>
+        </div>
+    `}).join('');
 }
 
 function renderSideNav() {
     const nav = document.getElementById('sideNav');
-    const c1s = zhSort(allCategories.filter(c => c.level === 1), 'name');
     let html = `<div class="nav-item ${currentCat1 === '全部' ? 'active' : ''}" onclick="setCat1('全部')">全部</div>`;
-    c1s.forEach(c => {
+    allCategories.filter(c => c.level === 1).forEach(c => {
         html += `<div class="nav-item ${currentCat1 === c.name ? 'active' : ''}" onclick="setCat1('${c.name}')">${c.name}</div>`;
     });
     nav.innerHTML = html;
@@ -62,68 +56,11 @@ function renderSideNav() {
 function renderSubNav() {
     const nav = document.getElementById('subNav');
     if (currentCat1 === '全部') {
-        const locs = zhSort(allLocations, 'name');
-        nav.innerHTML = `<span class="tag ${filterLoc === '' ? 'active' : ''}" onclick="setLocFilter('')">全部位置</span>` +
-            locs.map(l => `<span class="tag ${filterLoc === l.name ? 'active' : ''}" onclick="setLocFilter('${l.name}')">${l.name}</span>`).join('');
+        nav.innerHTML = `<span class="tag ${filterLoc === '' ? 'active' : ''}" onclick="setLocFilter('')">全部位置</span>` + allLocations.filter(l => l.level === 1).map(l => `<span class="tag ${filterLoc === l.name ? 'active' : ''}" onclick="setLocFilter('${l.name}')">${l.name}</span>`).join('');
     } else {
-        const parent = allCategories.find(c => c.name === currentCat1);
-        const subs = zhSort(allCategories.filter(c => c.parentId === parent?._id), 'name');
-        nav.innerHTML = `<span class="tag ${currentCat2 === '' ? 'active' : ''}" onclick="setCat2('')">全部子类</span>` +
-            subs.map(c => `<span class="tag ${currentCat2 === c.name ? 'active' : ''}" onclick="setCat2('${c.name}')">${c.name}</span>`).join('');
+        const p = allCategories.find(c => c.name === currentCat1);
+        nav.innerHTML = `<span class="tag ${currentCat2 === '' ? 'active' : ''}" onclick="setCat2('')">全部子类</span>` + allCategories.filter(c => c.parentId === p?._id).map(c => `<span class="tag ${currentCat2 === c.name ? 'active' : ''}" onclick="setCat2('${c.name}')">${c.name}</span>`).join('');
     }
-}
-
-function initDropdowns() {
-    const c1s = zhSort(allCategories.filter(c => c.level === 1), 'name');
-    document.getElementById('sel1').innerHTML = '<option value="">主分类</option>' + 
-        c1s.map(c => `<option value="${c.name}" data-id="${c._id}">${c.name}</option>`).join('');
-    
-    document.getElementById('sel1').onchange = (e) => {
-        const pid = e.target.options[e.target.selectedIndex].dataset.id;
-        const c2s = zhSort(allCategories.filter(c => c.parentId === pid), 'name');
-        document.getElementById('sel2').innerHTML = '<option value="">子分类</option>' + c2s.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-    };
-
-    const locs = zhSort(allLocations, 'name');
-    document.getElementById('locationCheckList').innerHTML = locs.map(l => `
-        <label class="cb-item"><input type="checkbox" name="loc-cb" value="${l.name}"><span>${l.name}</span></label>
-    `).join('');
-}
-
-function setCat1(n) { currentCat1 = n; currentCat2 = ''; filterLoc = ''; renderSideNav(); renderSubNav(); renderGrid(); }
-function setCat2(n) { currentCat2 = n; renderSubNav(); renderGrid(); }
-function setLocFilter(l) { filterLoc = l; renderSubNav(); renderGrid(); }
-function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
-
-document.getElementById('itemForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('editItemId').value;
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
-    data.locations = Array.from(document.querySelectorAll('input[name="loc-cb"]:checked')).map(cb => cb.value);
-    
-    await fetch(id ? `${API_BASE}/api/items/${id}` : `${API_BASE}/api/items`, {
-        method: id ? 'PUT' : 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-    toggleModal('itemModal', false);
-    refreshAll();
-};
-
-async function editItem(id) {
-    const item = allItems.find(i => i._id === id);
-    document.getElementById('editItemId').value = item._id;
-    document.getElementById('formName').value = item.name;
-    document.getElementById('formImg').value = item.imageUrl;
-    document.getElementById('formSpec').value = item.spec;
-    document.getElementById('formQty').value = item.quantity;
-    document.getElementById('formNotes').value = item.notes;
-    document.getElementById('sel1').value = item.cat1;
-    document.getElementById('sel1').dispatchEvent(new Event('change'));
-    setTimeout(() => { document.getElementById('sel2').value = item.cat2; }, 10);
-    document.querySelectorAll('input[name="loc-cb"]').forEach(cb => cb.checked = item.locations.includes(cb.value));
-    toggleModal('itemModal', true);
 }
 
 function switchTab(t) {
@@ -134,51 +71,256 @@ function switchTab(t) {
     t === 'cat' ? renderCatList() : renderLocList();
 }
 
+// ----------------- 重点修改：树状渲染逻辑 -----------------
+
+function toggleTree(e, id) {
+    e.stopPropagation();
+    const item = e.currentTarget;
+    const group = document.getElementById(id);
+    const isExpanded = item.classList.toggle('expanded');
+    if (group) group.classList.toggle('show', isExpanded);
+}
+
 function renderCatList() {
     let html = '';
-    const c1s = zhSort(allCategories.filter(c => c.level === 1), 'name');
-    c1s.forEach(c1 => {
-        html += `<div class="mgr-item primary"><span>${c1.name}</span> <span onclick="deleteCat('${c1._id}')" style="color:red;cursor:pointer">删除</span></div>`;
-        const c2s = zhSort(allCategories.filter(c => c.parentId === c1._id), 'name');
-        c2s.forEach(c2 => {
-            html += `<div class="mgr-item secondary"><span>└ ${c2.name}</span> <span onclick="deleteCat('${c2._id}')" style="color:red;cursor:pointer">删除</span></div>`;
-        });
+    allCategories.filter(c => c.level === 1).forEach(c1 => {
+        const children = allCategories.filter(c => c.parentId === c1._id);
+        const hasChild = children.length > 0;
+        const childGroupId = `cat-group-${c1._id}`;
+        
+        html += `
+            <div class="mgr-item" onclick="toggleTree(event, '${childGroupId}')">
+                <span><span class="toggle-icon">${hasChild ? '▶' : ''}</span><b>${c1.name}</b></span>
+                <span class="del-btn" onclick="deleteCat(event, '${c1._id}')">删除</span>
+            </div>
+            <div id="${childGroupId}" class="child-group">
+                ${children.map(c2 => `
+                    <div class="mgr-item" style="padding-left:30px">
+                        <span>${c2.name}</span>
+                        <span class="del-btn" onclick="deleteCat(event, '${c2._id}')">删除</span>
+                    </div>
+                `).join('')}
+            </div>`;
     });
     document.getElementById('catList').innerHTML = html;
 }
 
 function renderLocList() {
-    const locs = zhSort(allLocations, 'name');
-    document.getElementById('locList').innerHTML = locs.map(l => `<div class="mgr-item"><span>${l.name}</span> <span onclick="deleteLoc('${l._id}')" style="color:red;cursor:pointer">删除</span></div>`).join('');
+    let html = '';
+    allLocations.filter(l => l.level === 1).forEach(l1 => {
+        const l2Children = allLocations.filter(l => l.parentId === l1._id);
+        const hasChild1 = l2Children.length > 0;
+        const g1Id = `loc-g-${l1._id}`;
+
+        html += `
+            <div class="mgr-item" onclick="toggleTree(event, '${g1Id}')">
+                <span><span class="toggle-icon">${hasChild1 ? '▶' : ''}</span><b>${l1.name}</b></span>
+                <span class="del-btn" onclick="deleteLoc(event, '${l1._id}')">删除</span>
+            </div>
+            <div id="${g1Id}" class="child-group">
+                ${l2Children.map(l2 => {
+                    const l3Children = allLocations.filter(l => l.parentId === l2._id);
+                    const hasChild2 = l3Children.length > 0;
+                    const g2Id = `loc-g-${l2._id}`;
+                    return `
+                        <div class="mgr-item" style="padding-left:25px" onclick="toggleTree(event, '${g2Id}')">
+                            <span><span class="toggle-icon">${hasChild2 ? '▶' : ''}</span>${l2.name}</span>
+                            <span class="del-btn" onclick="deleteLoc(event, '${l2._id}')">删除</span>
+                        </div>
+                        <div id="${g2Id}" class="child-group">
+                            ${l3Children.map(l3 => `
+                                <div class="mgr-item" style="padding-left:50px">
+                                    <span>${l3.name}</span>
+                                    <span class="del-btn" onclick="deleteLoc(event, '${l3._id}')">删除</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }).join('')}
+            </div>`;
+    });
+    document.getElementById('locList').innerHTML = html;
 }
 
+// --------------------------------------------------------
+
+document.getElementById('itemForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('.btn-submit');
+    const id = document.getElementById('editItemId').value;
+    const fileInput = document.getElementById('fileInput');
+    const originalText = btn.innerText;
+    btn.innerText = '提交中...'; btn.disabled = true;
+
+    try {
+        let finalImageUrl = document.getElementById('formImg').value;
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const cat1 = document.getElementById('sel1').value;
+            const cat2 = document.getElementById('sel2').value || '未分类';
+            const d = new Date();
+            const timeStr = d.getFullYear().toString().slice(-2) + (d.getMonth() + 1).toString().padStart(2, '0') + d.getDate().toString().padStart(2, '0') + d.getHours().toString().padStart(2, '0') + d.getMinutes().toString().padStart(2, '0') + d.getSeconds().toString().padStart(2, '0');
+            const customName = `${cat1}-${cat2}-${timeStr}.${file.name.split('.').pop()}`;
+            const fd = new FormData();
+            fd.append('file', file); fd.append('fileName', customName);
+            const upRes = await fetch('/api/upload', { method: 'POST', body: fd }).then(r => r.json());
+            finalImageUrl = upRes.url;
+        }
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData);
+        data.imageUrl = finalImageUrl;
+        data.locations = [
+            document.getElementById('locSel1').value, 
+            document.getElementById('locSel2').value, 
+            document.getElementById('locSel3').value
+        ].filter(v => v);
+        
+        await fetch(id ? `/api/items/${id}` : '/api/items', { 
+            method: id ? 'PUT' : 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(data) 
+        });
+        alert("操作成功");
+        toggleModal('itemModal', false); refreshAll();
+    } catch (err) { alert('操作失败'); } finally { btn.innerText = originalText; btn.disabled = false; }
+};
+
+// 增加 event 防止冒泡触发折叠
+async function deleteCat(e, id) { 
+    e.stopPropagation();
+    if (confirm('确认删除？其下所有子类也将被删除！')) { 
+        await fetch(`/api/categories/${id}`, { method: 'DELETE' }); 
+        refreshAll().then(renderCatList); 
+    } 
+}
+async function deleteLoc(e, id) { 
+    e.stopPropagation();
+    if (confirm('确认删除？其下所有子级位置也将被删除！')) { 
+        await fetch(`/api/locations/${id}`, { method: 'DELETE' }); 
+        refreshAll().then(renderLocList); 
+    } 
+}
+async function deleteItem(id) { if (confirm('确认删除？')) { await fetch(`/api/items/${id}`, { method: 'DELETE' }); refreshAll(); } }
+
+function initDropdowns() {
+    const s1 = document.getElementById('sel1'), s2 = document.getElementById('sel2');
+    s1.innerHTML = '<option value="">主分类</option>' + allCategories.filter(c => c.level === 1).map(c => `<option value="${c.name}" data-id="${c._id}">${c.name}</option>`).join('');
+    s1.onchange = () => {
+        const pid = s1.options[s1.selectedIndex].dataset.id;
+        s2.innerHTML = '<option value="">子分类</option>' + allCategories.filter(c => c.parentId === pid).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    };
+    const ls1 = document.getElementById('locSel1'), ls2 = document.getElementById('locSel2'), ls3 = document.getElementById('locSel3');
+    ls1.innerHTML = '<option value="">一级位置</option>' + allLocations.filter(l => l.level === 1).map(l => `<option value="${l.name}" data-id="${l._id}">${l.name}</option>`).join('');
+    ls1.onchange = () => {
+        const pid = ls1.options[ls1.selectedIndex].dataset.id;
+        ls2.innerHTML = '<option value="">二级位置</option>' + allLocations.filter(l => l.parentId === pid).map(l => `<option value="${l.name}" data-id="${l._id}">${l.name}</option>`).join('');
+        ls3.innerHTML = '<option value="">三级位置</option>';
+    };
+    ls2.onchange = () => {
+        const pid = ls2.options[ls2.selectedIndex].dataset.id;
+        ls3.innerHTML = '<option value="">三级位置</option>' + allLocations.filter(l => l.parentId === pid).map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+    };
+}
+
+function updateParentOptions(type) {
+    if (type === 'cat') {
+        const lv = document.getElementById('newCatLevel').value;
+        const ps = document.getElementById('parentSelect');
+        ps.style.display = lv === "2" ? "block" : "none";
+        ps.innerHTML = '<option value="">选主类</option>' + allCategories.filter(c => c.level === 1).map(c => `<option value="${c._id}">${c.name}</option>`).join('');
+    } else {
+        const lv = document.getElementById('newLocLevel').value;
+        const p1 = document.getElementById('locP1'), p2 = document.getElementById('locP2');
+        p1.style.display = lv > 1 ? "block" : "none";
+        p2.style.display = lv > 2 ? "block" : "none";
+        p1.innerHTML = '<option value="">一级父项</option>' + allLocations.filter(l => l.level === 1).map(l => `<option value="${l._id}">${l.name}</option>`).join('');
+    }
+}
+
+function loadLocChildren(pId, targetId) {
+    const pid = document.getElementById(pId).value;
+    document.getElementById(targetId).innerHTML = '<option value="">二级父项</option>' + allLocations.filter(l => l.parentId === pid).map(l => `<option value="${l._id}">${l.name}</option>`).join('');
+}
+
+function setCat1(n) { currentCat1 = n; currentCat2 = ''; filterLoc = ''; renderSideNav(); renderSubNav(); renderGrid(); }
+function setCat2(n) { currentCat2 = n; renderSubNav(); renderGrid(); }
+function setLocFilter(n) { filterLoc = n; renderSubNav(); renderGrid(); }
+function toggleModal(id, s) { document.getElementById(id).style.display = s ? 'flex' : 'none'; }
+function openItemModal() { document.getElementById('itemForm').reset(); document.getElementById('editItemId').value = ''; document.getElementById('imagePreview').style.display='none'; initDropdowns(); toggleModal('itemModal', true); }
+function openAdminModal() { toggleModal('adminModal', true); switchTab('cat'); }
+
 async function handleAddCategory() {
-    const name = document.getElementById('newCatName').value;
-    const level = parseInt(document.getElementById('newCatLevel').value);
-    const parentId = document.getElementById('parentSelect').value;
-    if(!name) return;
-    await fetch(`${API_BASE}/api/categories`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, level, parentId:level===2?parentId:null}) });
-    document.getElementById('newCatName').value = '';
-    refreshAll().then(renderCatList);
+    const name = document.getElementById('newCatName').value.trim();
+    const lv = parseInt(document.getElementById('newCatLevel').value);
+    const pid = document.getElementById('parentSelect').value || null;
+    if(!name) return alert("请输入名称");
+    const exists = allCategories.find(c => c.name === name && c.level === lv && String(c.parentId) === String(pid));
+    if(exists) return alert("该分类层级下已存在相同名称");
+    try {
+        await fetch('/api/categories', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ name, level: lv, parentId: pid }) 
+        });
+        alert("添加成功");
+        document.getElementById('newCatName').value = "";
+        refreshAll().then(renderCatList);
+    } catch(e) { alert("添加失败"); }
 }
 
 async function handleAddLocation() {
-    const name = document.getElementById('newLocName').value;
-    if(!name) return;
-    await fetch(`${API_BASE}/api/locations`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name}) });
-    document.getElementById('newLocName').value = '';
-    refreshAll().then(renderLocList);
+    const name = document.getElementById('newLocName').value.trim();
+    const lv = parseInt(document.getElementById('newLocLevel').value);
+    let pid = null; 
+    if(lv === 2) pid = document.getElementById('locP1').value; 
+    if(lv === 3) pid = document.getElementById('locP2').value;
+    if(!name) return alert("请输入名称");
+    const exists = allLocations.find(l => l.name === name && l.level === lv && String(l.parentId) === String(pid));
+    if(exists) return alert("该位置层级下已存在相同名称");
+    try {
+        await fetch('/api/locations', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ name, level: lv, parentId: pid }) 
+        });
+        alert("添加成功");
+        document.getElementById('newLocName').value = "";
+        refreshAll().then(renderLocList);
+    } catch(e) { alert("添加失败"); }
 }
 
-function updateParentOptions() {
-    const isL2 = document.getElementById('newCatLevel').value === "2";
-    const ps = document.getElementById('parentSelect');
-    ps.style.display = isL2 ? "block" : "none";
-    ps.innerHTML = allCategories.filter(c => c.level === 1).map(c => `<option value="${c._id}">${c.name}</option>`).join('');
+async function editItem(id) {
+    const item = allItems.find(i => i._id === id);
+    document.getElementById('editItemId').value = item._id;
+    document.getElementById('formName').value = item.name;
+    document.getElementById('formBrand').value = item.brand || '';
+    document.getElementById('formSpec').value = item.spec || '';
+    document.getElementById('formQty').value = item.quantity || '';
+    document.getElementById('formNotes').value = item.notes || '';
+    document.getElementById('formImg').value = item.imageUrl || '';
+    if(item.imageUrl) {
+        document.getElementById('imagePreview').style.display = 'flex';
+        document.getElementById('previewImg').src = item.imageUrl;
+    }
+    document.getElementById('sel1').value = item.cat1;
+    document.getElementById('sel1').dispatchEvent(new Event('change'));
+    setTimeout(() => {
+        document.getElementById('sel2').value = item.cat2;
+        document.getElementById('locSel1').value = item.locations[0] || '';
+        document.getElementById('locSel1').dispatchEvent(new Event('change'));
+        setTimeout(() => {
+            document.getElementById('locSel2').value = item.locations[1] || '';
+            document.getElementById('locSel2').dispatchEvent(new Event('change'));
+            setTimeout(() => { document.getElementById('locSel3').value = item.locations[2] || ''; }, 50);
+        }, 50);
+    }, 50);
+    toggleModal('itemModal', true);
 }
 
-function openItemModal() { document.getElementById('itemForm').reset(); document.getElementById('editItemId').value = ''; document.querySelectorAll('input[name="loc-cb"]').forEach(c=>c.checked=false); toggleModal('itemModal', true); }
-function openAdminModal() { toggleModal('adminModal', true); switchTab('cat'); updateParentOptions(); }
-async function deleteCat(id) { if(confirm('确认删除分类？')) { await fetch(`${API_BASE}/api/categories/${id}`, {method:'DELETE'}); refreshAll().then(renderCatList); } }
-async function deleteLoc(id) { if(confirm('确认删除位置？')) { await fetch(`${API_BASE}/api/locations/${id}`, {method:'DELETE'}); refreshAll().then(renderLocList); } }
-async function deleteItem(id) { if(confirm('确认从清单中移除？')) { await fetch(`${API_BASE}/api/items/${id}`, {method:'DELETE'}); refreshAll(); } }
+function toggleManageMode() {
+    isManageMode = !isManageMode;
+    const btn = document.getElementById('manageBtn');
+    const grid = document.getElementById('itemGrid');
+    if (isManageMode) { grid.classList.add('manage-on'); btn.innerText = '退出'; btn.style.background = '#333'; btn.style.color = '#fff'; }
+    else { grid.classList.remove('manage-on'); btn.innerText = '编辑'; btn.style.background = '#eee'; btn.style.color = '#666'; }
+}

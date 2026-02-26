@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极简物品清单</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>WebStorage</title>
+    <link rel="icon" href="https://mcj.life/logo.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="header">
-        <div class="logo">📦 物存.Storage</div>
+        <div class="logo"><img src="https://mcj.life/logo.png" alt="Logo"></div>
         <div class="header-btns">
-            <button onclick="openItemModal()">+ 新增物品</button>
-            <button onclick="openAdminModal()">后台配置</button>
+            <button id="manageBtn" onclick="toggleManageMode()">编辑</button>
+            <button onclick="openItemModal()" class="primary-btn">新增</button>
+            <button onclick="openAdminModal()" class="ghost-btn">配置</button>
         </div>
     </header>
 
@@ -24,67 +27,70 @@
 
     <div id="itemModal" class="modal">
         <div class="modal-card">
-            <h3>物品信息登记</h3>
+            <div class="modal-header" style="text-align:center; font-weight:bold; margin-bottom:15px; font-size:18px;">物品登记</div>
             <form id="itemForm">
                 <input type="hidden" id="editItemId">
-                <div class="form-section">
-                    <label class="form-label">物品名称</label>
-                    <input type="text" name="name" id="formName" required placeholder="输入物品全名">
+                <div class="flex-row" style="margin-bottom:10px">
+                    <input type="text" name="name" id="formName" placeholder="名称" required>
+                    <input type="text" name="brand" id="formBrand" placeholder="品牌">
                 </div>
-                
-                <div class="form-row"> <div><label class="form-label">主分类</label><select id="sel1" name="cat1" required></select></div>
-                    <div><label class="form-label">子分类</label><select id="sel2" name="cat2"></select></div>
+                <div class="flex-row" style="margin-bottom:10px">
+                    <select id="sel1" name="cat1" required></select>
+                    <select id="sel2" name="cat2"></select>
                 </div>
-
-                <div class="form-row"> <div><label class="form-label">规格</label><input type="text" name="spec" id="formSpec" placeholder="100ml / 大号"></div>
-                    <div><label class="form-label">数量</label><input type="number" name="quantity" id="formQty" value="1"></div>
+                <div class="flex-row" style="margin-bottom:10px">
+                    <input type="text" name="spec" id="formSpec" placeholder="规格">
+                    <input type="text" name="quantity" id="formQty" placeholder="数量">
                 </div>
-
-                <div class="form-row"> <div><label class="form-label">图片 URL</label><input type="url" name="imageUrl" id="formImg"></div>
-                    <div><label class="form-label">备注</label><input type="text" name="notes" id="formNotes"></div>
+                <div class="flex-row" style="margin-bottom:10px">
+                    <select id="locSel1"></select>
+                    <select id="locSel2"></select>
+                    <select id="locSel3"></select>
                 </div>
-
-                <div class="form-section">
-                    <label class="form-label">存放位置 (一行3列)</label>
-                    <div class="loc-container">
-                        <div id="locationCheckList" class="loc-grid"></div>
-                    </div>
+                <input type="text" name="notes" id="formNotes" placeholder="备注" style="margin-bottom:10px">
+                <div id="imagePreview" class="image-preview" style="display:none">
+                    <img src="" id="previewImg"><span>图片预览</span>
                 </div>
-
-                <div style="display:flex; gap:12px; margin-top:20px">
-                    <button type="button" onclick="toggleModal('itemModal', false)" style="flex:1; background:#eee; border:none; padding:10px; border-radius:10px; cursor:pointer">取消</button>
-                    <button type="submit" style="flex:2; background:var(--primary); color:#fff; border:none; padding:10px; border-radius:10px; cursor:pointer; font-weight:700">保存登记</button>
+                <input type="file" id="fileInput" accept="image/*">
+                <input type="hidden" name="imageUrl" id="formImg">
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="toggleModal('itemModal', false)">取消</button>
+                    <button type="submit" class="btn-submit">确认提交</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div id="adminModal" class="modal">
-        <div class="modal-card" style="width: 420px;">
-            <div class="tab-bar">
-                <button onclick="switchTab('cat')" id="tabCat" class="active">分类管理</button>
-                <button onclick="switchTab('loc')" id="tabLoc">位置管理</button>
+        <div class="modal-card">
+            <div class="admin-tabs">
+                <button onclick="switchTab('cat')" id="tabCat" class="active">分类</button>
+                <button onclick="switchTab('loc')" id="tabLoc">位置</button>
             </div>
-            
             <div id="catPanel">
-                <div style="display:flex; gap:8px; margin-bottom:10px">
-                    <input type="text" id="newCatName" placeholder="新分类" style="flex:2">
-                    <select id="newCatLevel" onchange="updateParentOptions()" style="flex:1">
+                <div class="flex-row">
+                    <input type="text" id="newCatName" placeholder="名称">
+                    <select id="newCatLevel" onchange="updateParentOptions('cat')">
                         <option value="1">一级</option><option value="2">二级</option>
                     </select>
                 </div>
-                <select id="parentSelect" style="display:none; margin-bottom:10px"></select>
-                <button onclick="handleAddCategory()" class="btn-primary-block" style="background:var(--primary); color:#fff; border:none; padding:10px; width:100%; border-radius:10px; cursor:pointer">确认添加</button>
-                <div id="catList" class="mgr-list"></div>
+                <select id="parentSelect" style="display:none; margin-top:5px;"></select>
+                <button onclick="handleAddCategory()" class="btn-orange">添加</button>
+                <div id="catList" class="data-list"></div>
             </div>
-
             <div id="locPanel" style="display:none">
-                <input type="text" id="newLocName" placeholder="新位置名称" style="margin-bottom:10px">
-                <button onclick="handleAddLocation()" class="btn-primary-block" style="background:var(--primary); color:#fff; border:none; padding:10px; width:100%; border-radius:10px; cursor:pointer">保存位置</button>
-                <div id="locList" class="mgr-list"></div>
+                <input type="text" id="newLocName" placeholder="位置">
+                <div class="flex-row" style="margin-top:5px">
+                    <select id="newLocLevel" onchange="updateParentOptions('loc')">
+                        <option value="1">一级</option><option value="2">二级</option><option value="3">三级</option>
+                    </select>
+                    <select id="locP1" onchange="loadLocChildren('locP1','locP2')" style="display:none"></select>
+                    <select id="locP2" style="display:none"></select>
+                </div>
+                <button onclick="handleAddLocation()" class="btn-orange">添加</button>
+                <div id="locList" class="data-list"></div>
             </div>
-
-            <div style="text-align: center; margin-top: 15px;"><button onclick="toggleModal('adminModal', false)" style="background:none; border:none; color:#999; cursor:pointer">关闭</button></div>
+            <button onclick="toggleModal('adminModal', false)" style="width:100%; margin-top:15px; padding:12px; border:none; border-radius:14px; background:#f0f0f2;">关闭</button>
         </div>
     </div>
     <script src="app.js"></script>
