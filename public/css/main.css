@@ -1,0 +1,43 @@
+/* 全局变量与基础重置 */
+:root { --primary: #ff5000; --bg: #f4f4f7; --text: #1d1d1f; --radius: 14px; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body { 
+    margin: 0; background: var(--bg); height: 100vh; display: flex; flex-direction: column; 
+    padding-top: env(safe-area-inset-top); font-family: -apple-system, sans-serif;
+}
+
+/* 顶部导航框架 */
+.header { 
+    height: 60px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; 
+    background: #fff; border-bottom: 1px solid #eee; z-index: 100;
+}
+.logo { display: flex; align-items: center; margin-left: 20px; }
+.logo img { height: 28px; width: auto; }
+
+/* 全局按钮样式 */
+.header-btns { display: flex; gap: 8px; }
+.header-btns button { border: none; padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+#manageBtn { background: #eee; color: #666; }
+.primary-btn { background: var(--primary); color: #fff; }
+.ghost-btn { background: #f0f0f2; color: #444; }
+
+/* 主体内容框架布局 */
+.main-layout { flex: 1; display: flex; overflow: hidden; }
+.content-view { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
+
+/* 全局通用弹窗组件 */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; }
+.modal-card { background: #fff; width: 100%; max-width: 420px; border-radius: 20px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+input, select { background: #f8f8f9; border: 1px solid #efeff2; border-radius: 10px; padding: 10px; width: 100%; font-size: 14px; outline: none; }
+
+.modal-footer { display: flex; gap: 12px; margin-top: 25px; }
+.btn-cancel { flex: 1; background: #f0f0f2; color: #666; border: none; padding: 14px; border-radius: 14px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.btn-submit { flex: 2; background: var(--primary); color: #fff; border: none; padding: 14px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(255, 80, 0, 0.2); }
+
+.flex-row { display: flex; gap: 8px; }
+
+@media (max-width: 600px) {
+    .main-layout { flex-direction: column; }
+    .content-view { padding: 10px; }
+}

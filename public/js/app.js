@@ -146,23 +146,35 @@ document.getElementById('itemForm').onsubmit = async (e) => {
     const id = document.getElementById('editItemId').value;
     const fileInput = document.getElementById('fileInput');
     const originalText = btn.innerText;
-    btn.innerText = '提交中...'; btn.disabled = true;
+    btn.innerText = '正在上传...'; btn.disabled = true;
 
     try {
         let finalImageUrl = document.getElementById('formImg').value;
+        
+        // 关键修复：确保文件上传逻辑执行并获取正确的 URL
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0];
             const cat1 = document.getElementById('sel1').value;
             const cat2 = document.getElementById('sel2').value || '未分类';
+            
             const d = new Date();
             const timeStr = d.getFullYear().toString().slice(-2) + (d.getMonth() + 1).toString().padStart(2, '0') + d.getDate().toString().padStart(2, '0') + d.getHours().toString().padStart(2, '0') + d.getMinutes().toString().padStart(2, '0') + d.getSeconds().toString().padStart(2, '0');
-            const customName = `${cat1}-${cat2}-${timeStr}.${file.name.split('.').pop()}`;
+            const ext = file.name.split('.').pop();
+            const customName = `${cat1}-${cat2}-${timeStr}.${ext}`;
+            
             const fd = new FormData();
-            fd.append('file', file); fd.append('fileName', customName);
+            fd.append('file', file); 
+            fd.append('fileName', customName);
+            
             const upRes = await fetch('/api/upload', { method: 'POST', body: fd }).then(r => r.json());
-            finalImageUrl = upRes.url;
+            if (upRes && upRes.url) {
+                finalImageUrl = upRes.url;
+            } else {
+                throw new Error("图片上传返回格式错误");
+            }
         }
         
+        btn.innerText = '提交中...';
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData);
         data.imageUrl = finalImageUrl;
@@ -172,14 +184,24 @@ document.getElementById('itemForm').onsubmit = async (e) => {
             document.getElementById('locSel3').value
         ].filter(v => v);
         
-        await fetch(id ? `/api/items/${id}` : '/api/items', { 
+        const res = await fetch(id ? `/api/items/${id}` : '/api/items', { 
             method: id ? 'PUT' : 'POST', 
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify(data) 
         });
+
+        if (!res.ok) throw new Error("数据库保存失败");
+        
         alert("操作成功");
-        toggleModal('itemModal', false); refreshAll();
-    } catch (err) { alert('操作失败'); } finally { btn.innerText = originalText; btn.disabled = false; }
+        toggleModal('itemModal', false); 
+        refreshAll();
+    } catch (err) { 
+        console.error(err);
+        alert('操作失败: ' + err.message); 
+    } finally { 
+        btn.innerText = originalText; 
+        btn.disabled = false; 
+    }
 };
 
 async function deleteCat(e, id) { 
@@ -287,6 +309,7 @@ async function handleAddLocation() {
 
 async function editItem(id) {
     const item = allItems.find(i => i._id === id);
+    if(!item) return;
     document.getElementById('editItemId').value = item._id;
     document.getElementById('formName').value = item.name;
     document.getElementById('formBrand').value = item.brand || '';

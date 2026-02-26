@@ -1,0 +1,26 @@
+/* 物品展示网格系统 */
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+
+/* 物品卡片设计 */
+.card { background: #fff; border-radius: var(--radius); padding: 10px; position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+.card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; }
+
+.card-body { text-align: center; display: flex; flex-direction: column; align-items: center; padding-top: 8px; }
+.line1 { display: flex; justify-content: center; align-items: baseline; gap: 6px; width: 100%; margin-bottom: 4px; }
+.name { font-size: 14px; font-weight: bold; color: var(--text); }
+.notes-mini { font-size: 11px; color: #999; font-weight: normal; }
+.line2 { font-size: 11px; color: #666; margin-bottom: 2px; }
+.line3 { font-size: 11px; color: var(--primary); font-weight: 600; }
+
+/* 物品编辑模式：遮罩操作层 */
+.card-mask { 
+    display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.9); 
+    z-index: 10; align-items: center; justify-content: center; flex-direction: column; gap: 10px; 
+}
+.manage-on .card-mask { display: flex; }
+.card-mask button { padding: 8px 16px; border-radius: 20px; border: 1px solid #ddd; background: #fff; font-size: 12px; cursor: pointer; }
+
+/* 移动端网格适配 */
+@media (max-width: 600px) {
+    .item-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+}

@@ -1,0 +1,29 @@
+/* 管理面板内部的切换选项卡 */
+.admin-tabs { display: flex; background: #f0f0f2; padding: 4px; border-radius: 12px; margin-bottom: 20px; }
+.admin-tabs button { flex: 1; border: none; padding: 8px; border-radius: 9px; background: none; cursor: pointer; font-size: 13px; color: #666; }
+.admin-tabs button.active { background: #fff; color: var(--text); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+/* 分类与位置的管理列表项 */
+.mgr-item { 
+    display: flex; justify-content: space-between; align-items: center; 
+    padding: 12px 10px; border-bottom: 1px solid #f9f9f9; font-size: 14px; 
+    cursor: pointer; transition: background 0.2s;
+}
+.mgr-item:hover { background: #fcfcfc; }
+
+/* 树形结构的折叠/展开图标 */
+.toggle-icon { 
+    display: inline-block; width: 16px; height: 16px; 
+    text-align: center; line-height: 16px; font-size: 10px; 
+    color: #bbb; transition: transform 0.2s; margin-right: 4px;
+}
+.mgr-item.expanded .toggle-icon { transform: rotate(90deg); color: var(--primary); }
+
+/* 子级分组显示逻辑 */
+.child-group { display: none; background: rgba(0,0,0,0.01); }
+.child-group.show { display: block; }
+
+/* 管理容器与专用操作按钮 */
+.data-list { margin-top: 15px; border: 1px solid #eee; border-radius: 10px; max-height: 400px; overflow-y: auto; }
+.del-btn { color: #ff5000; cursor: pointer; font-size: 12px; font-weight: bold; background: #fff0eb; padding: 2px 8px; border-radius: 6px; margin-left: 10px; }
+.btn-orange { width: 100%; background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; }
