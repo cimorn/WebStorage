@@ -13,65 +13,100 @@
 
 ---
 
-## ✨ 核心功能
+## 📂 项目结构与文件功能
 
-### 1. 完整数据记录
+### 目录树预览
 
-支持物资的全维度信息录入，包括名称、品牌、规格、数量以及个性化备注，确保每一件物品都有据可查。
+```text
+/WebStorage
+├── /public                # 静态资源目录（前端）
+│    ├── index.html        # 单页应用入口
+│    ├── /css              # 样式模块化文件夹
+│    │    ├── config.css   # 【核心】一二级分类管理与位置配置界面样式
+│    │    ├── goods.css    # 【核心】物件网格展示、新增/编辑表单及遮罩样式
+│    │    ├── main.css     # 【框架】全局变量、基础布局、Header及Modal通用样式
+│    │    └── navigation.css # 【交互】侧边栏分类及顶部标签栏样式
+│    └── /js               # 逻辑模块化文件夹
+│         ├── config.js    # 【管理】分类/位置的配置逻辑、树形列表渲染
+│         ├── goods.js     # 【物件】物品渲染、图片上传、增删改查逻辑
+│         ├── main.js      # 【全局】数据初始化、弹窗控制、编辑模式切换
+│         └── navigation.js # 【导航】分类切换与数据过滤逻辑
+├── server.js              # Node.js 后端服务 (Express + MongoDB + OSS)
+├── package.json           # 项目依赖与启动配置
+└── README.md              # 项目说明文档
 
-### 2. MongoDB数据集成
+```
 
-底层深度集成 MongoDB 数据库，利用其文档型存储的特性，实现物资数据的灵活扩展与高效存取。无论是复杂的层级关系还是海量的物品清单，都能保证查询响应在毫秒级。
+### 文件详细说明
 
-### 3. 阿里云OSS集成
+#### 1. 前端样式 (public/css/)
 
-系统原生对接阿里云 OSS 对象存储。物资照片可直接上传至云端，不仅节省服务器空间，更保证了图片加载的极速响应与安全性。
+* **config.css**: 专门负责管理后台中“一二级分类”和“位置管理”相关的 UI，包含树形折叠图标和管理列表项。
+* **goods.css**: 负责物品网格（Grid）布局、卡片（Card）外观，以及点击“编辑”后出现的半透明操作遮罩。
+* **main.css**: 整个系统的根基，包含配色方案（CSS Variables）、整体页面骨架、以及通用的弹窗、按钮和输入框样式。
+* **navigation.css**: 处理侧边主导航和顶部二级分类标签的响应式切换。
 
-### 4. 侧边导航筛选
+#### 2. 前端逻辑 (public/js/)
 
-左侧设有固定的一级分类导航栏，支持点击即时切换，在大类目之间跳转丝滑顺畅。
+* **config.js**: 包含分类管理和位置管理的全部 JS 逻辑，如 `renderCatList`（渲染分类树）和 `handleAddLocation`（位置去重添加）。
+* **goods.js**: 负责核心业务，如 `renderGrid`（渲染物品）、图片重命名上传逻辑以及物品数据的提交更新。
+* **main.js**: 作为主入口，负责 `window.onload` 后的数据拉取（refreshAll）和管理模式开关。
+* **navigation.js**: 纯粹处理导航交互，点击分类时触发数据筛选。
 
-### 5. 多级标签分类
+---
 
-支持“一级位置、二级位置、三级位置”的自由拼接。无论是“宿舍-卧室-抽屉”还是“仓库-A架-3号箱”，都能完美适配。
+## 💻 本地预览步骤
 
-### 6. 树状折叠管理
+1. **环境准备**：安装 [Node.js](https://nodejs.org/)，并确保拥有 **MongoDB** 地址及 **阿里云 OSS** 账号。
+2. **安装依赖**：
+```bash
+npm install
 
-配置中心采用树状交互逻辑，支持一键展开或缩起子层级。即使有成百上千个位置节点，界面依然整洁易用。
+```
 
-### 7. 同级重名查重
 
-严谨的逻辑校验：在同一个父级目录下，禁止添加名称完全相同的分类或位置，从源头杜绝数据混乱。
+3. **配置环境**：在本地创建 `.env` 或在 `server.js` 中填入你的 `MONGO_URL`、`OSS_REGION`、`OSS_ACCESS_KEY_ID`、`OSS_ACCESS_KEY_SECRET` 和 `OSS_BUCKET`。
+4. **启动服务**：
+```bash
+node server.js
 
+```
+
+
+5. **访问地址**：打开浏览器访问 `http://localhost:3000`。
 
 ---
 
 ## 🚀 在 Zeabur 上的部署操作
 
-### 第一步：代码准备
+### 第一步：代码提交
 
-1. 在本地创建一个文件夹，放入 `server.js`, `app.js`, `index.html`, `style.css` 以及 `package.json`。
-2. 将代码推送到你的 GitHub 仓库。
+1. 确保你的项目根目录下有 `server.js` 和 `package.json`。
+2. 将整个文件夹（含 `public`）推送到你的 GitHub 仓库。
 
-### 第二步：Zeabur 部署
+### 第二步：创建服务
 
 1. 登录 [Zeabur](https://zeabur.com/)，点击 **Create Project**。
-2. 选择 **Deploy service**，连接 GitHub 并选择你的仓库，Zeabur 会自动识别并运行。
+2. 选择 **Deploy service**，连接 GitHub 并选择你的仓库。Zeabur 会自动识别 Node.js 环境并开始构建。
 
-### 第三步：配置环境变量
+### 第三步：配置环境变量 (关键)
 
-在 Zeabur 服务的 **Configs** 页面，点击 **Variables**，手动添加下方列出的必须变量。
+在 Zeabur 服务的 **Configs** 页面，点击 **Variables**，手动添加以下变量：
 
-### 第四步：绑定 MongoDB
+* `OSS_REGION`：阿里云 OSS 区域（如 `oss-cn-hangzhou`）。
+* `OSS_ACCESS_KEY_ID`：阿里云 AccessKey ID。
+* `OSS_ACCESS_KEY_SECRET`：阿里云 AccessKey Secret。
+* `OSS_BUCKET`：你的 OSS Bucket 名称。
 
-1. 在项目页面点击 **Prebuilt Service**，选择 **MongoDB** 部署。
-2. 部署后，Zeabur 会自动生成 `MONGO_URL` 变量。**请确保将该变量手动填入你服务的 Variables 中。**
+### 第四步：连接 MongoDB
+
+1. 在同一项目中点击 **Prebuilt Service**，选择 **MongoDB** 部署。
+2. 部署完成后，Zeabur 会自动在项目中提供一个 `MONGO_URL`。
+3. **重要**：请进入你的 Node.js 服务设置，确保它能正确读取到 MongoDB 生成的连接变量。
 
 ---
 
-## 🛠️ 需要添加的环境变量
-
-请确保在 Zeabur 环境变量中正确配置以下参数，否则图片上传及数据存储将无法工作：
+## 🛠️ 需要配置的环境变量清单
 
 | 变量名 | 说明 | 示例 |
 | --- | --- | --- |
