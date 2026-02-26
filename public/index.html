@@ -30,29 +30,38 @@
             <div class="modal-header" style="text-align:center; font-weight:bold; margin-bottom:15px; font-size:18px;">物品登记</div>
             <form id="itemForm">
                 <input type="hidden" id="editItemId">
+                
                 <div class="flex-row" style="margin-bottom:10px">
                     <input type="text" name="name" id="formName" placeholder="名称" required>
-                    <input type="text" name="brand" id="formBrand" placeholder="品牌">
+                    <input type="text" name="notes" id="formNotes" placeholder="备注">
                 </div>
+
+                <div class="flex-row" style="margin-bottom:10px">
+                    <input type="text" name="brand" id="formBrand" placeholder="品牌">
+                    <input type="text" name="spec" id="formSpec" placeholder="规格">
+                    <input type="text" name="quantity" id="formQty" placeholder="数量">
+                </div>
+
                 <div class="flex-row" style="margin-bottom:10px">
                     <select id="sel1" name="cat1" required></select>
                     <select id="sel2" name="cat2"></select>
                 </div>
-                <div class="flex-row" style="margin-bottom:10px">
-                    <input type="text" name="spec" id="formSpec" placeholder="规格">
-                    <input type="text" name="quantity" id="formQty" placeholder="数量">
-                </div>
+
                 <div class="flex-row" style="margin-bottom:10px">
                     <select id="locSel1"></select>
                     <select id="locSel2"></select>
                     <select id="locSel3"></select>
                 </div>
-                <input type="text" name="notes" id="formNotes" placeholder="备注" style="margin-bottom:10px">
-                <div id="imagePreview" class="image-preview" style="display:none">
-                    <img src="" id="previewImg"><span>图片预览</span>
+
+                <div style="margin-bottom:10px">
+                    <input type="text" name="imageUrl" id="formImg" placeholder="图片链接">
                 </div>
-                <input type="file" id="fileInput" accept="image/*">
-                <input type="hidden" name="imageUrl" id="formImg">
+
+                <div style="margin-bottom:10px">
+                    <div style="font-size: 11px; color: #999; margin-bottom: 5px; padding-left: 5px;">或者上传本地图片：</div>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+                
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="toggleModal('itemModal', false)">取消</button>
                     <button type="submit" class="btn-submit">确认提交</button>

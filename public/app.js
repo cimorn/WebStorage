@@ -71,8 +71,6 @@ function switchTab(t) {
     t === 'cat' ? renderCatList() : renderLocList();
 }
 
-// ----------------- 重点修改：树状渲染逻辑 -----------------
-
 function toggleTree(e, id) {
     e.stopPropagation();
     const item = e.currentTarget;
@@ -142,8 +140,6 @@ function renderLocList() {
     document.getElementById('locList').innerHTML = html;
 }
 
-// --------------------------------------------------------
-
 document.getElementById('itemForm').onsubmit = async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('.btn-submit');
@@ -166,6 +162,7 @@ document.getElementById('itemForm').onsubmit = async (e) => {
             const upRes = await fetch('/api/upload', { method: 'POST', body: fd }).then(r => r.json());
             finalImageUrl = upRes.url;
         }
+        
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData);
         data.imageUrl = finalImageUrl;
@@ -185,7 +182,6 @@ document.getElementById('itemForm').onsubmit = async (e) => {
     } catch (err) { alert('操作失败'); } finally { btn.innerText = originalText; btn.disabled = false; }
 };
 
-// 增加 event 防止冒泡触发折叠
 async function deleteCat(e, id) { 
     e.stopPropagation();
     if (confirm('确认删除？其下所有子类也将被删除！')) { 
@@ -246,7 +242,7 @@ function setCat1(n) { currentCat1 = n; currentCat2 = ''; filterLoc = ''; renderS
 function setCat2(n) { currentCat2 = n; renderSubNav(); renderGrid(); }
 function setLocFilter(n) { filterLoc = n; renderSubNav(); renderGrid(); }
 function toggleModal(id, s) { document.getElementById(id).style.display = s ? 'flex' : 'none'; }
-function openItemModal() { document.getElementById('itemForm').reset(); document.getElementById('editItemId').value = ''; document.getElementById('imagePreview').style.display='none'; initDropdowns(); toggleModal('itemModal', true); }
+function openItemModal() { document.getElementById('itemForm').reset(); document.getElementById('editItemId').value = ''; initDropdowns(); toggleModal('itemModal', true); }
 function openAdminModal() { toggleModal('adminModal', true); switchTab('cat'); }
 
 async function handleAddCategory() {
@@ -298,10 +294,7 @@ async function editItem(id) {
     document.getElementById('formQty').value = item.quantity || '';
     document.getElementById('formNotes').value = item.notes || '';
     document.getElementById('formImg').value = item.imageUrl || '';
-    if(item.imageUrl) {
-        document.getElementById('imagePreview').style.display = 'flex';
-        document.getElementById('previewImg').src = item.imageUrl;
-    }
+    
     document.getElementById('sel1').value = item.cat1;
     document.getElementById('sel1').dispatchEvent(new Event('change'));
     setTimeout(() => {

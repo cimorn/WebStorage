@@ -23,7 +23,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 const MONGO_URL = process.env.MONGO_URL;
 
 const client = new OSS({
@@ -84,7 +84,6 @@ app.post('/api/items', async (req, res) => res.json(await new Item(req.body).sav
 app.put('/api/items/:id', async (req, res) => res.json(await Item.findByIdAndUpdate(req.params.id, req.body)));
 app.delete('/api/items/:id', async (req, res) => res.json(await Item.findByIdAndDelete(req.params.id)));
 
-// server.js 结尾
 app.listen(PORT, () => {
     console.log('\n---------------------------------------');
     console.log(`🚀 服务启动成功！`);
